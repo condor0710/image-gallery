@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Challenge 1: Web App with Image-Upload</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Image Gallery</h1>
+            <p>Upload and manage your images</p>
+        </header>
+
+        <!-- Notification area -->
+        <div id="notification" class="notification hidden"></div>
+
+        <!-- Upload section -->
+        <section class="upload-section">
+            <h2>Upload Images</h2>
+            <div class="upload-area">
+                <input type="file" id="fileInput" accept="image/*" multiple>
+                <button onclick="upload()" class="upload-btn">Upload Images</button>
+            </div>
+            <div class="upload-info">
+                <p>You can select multiple images at once or drag and drop them here</p>
+            </div>
+            <div id="filePreview" class="file-preview"></div>
+        </section>
+
+        <!-- Gallery section -->
+        <section class="gallery-section">
+            <h2>Your Images</h2>
+            <div id="gallery" class="gallery">
+                <div class="loading">Loading images...</div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
