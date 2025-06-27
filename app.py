@@ -1,15 +1,20 @@
 from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 import os
+from dotenv import load_dotenv
 
-# Config
-ALLOWED_IPS = ['20.218.226.24', '10.9.3.55', '127.0.0.1'] 
+# Load environment variables
+load_dotenv()
+
+# Config from environment variables
+ALLOWED_IPS = os.environ.get('ALLOWED_IPS', '127.0.0.1').split(',')
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Create upload folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Helper: check file extension
@@ -17,7 +22,7 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# IP Whitelisting
+# IP Whitelisting - keeps your test app secure
 @app.before_request
 def limit_remote_addr():
     if request.remote_addr not in ALLOWED_IPS:

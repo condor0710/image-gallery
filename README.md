@@ -48,8 +48,7 @@ A Flask web application for uploading, managing, and displaying images with a cl
 - Gallery automatically updates after uploads and deletions
 
 ### Access Control
-The app is restricted to specific IP address.
-
+The app is restricted to specific IP addresses configured in your `.env` file.
 
 ## API Endpoints
 
