@@ -8,6 +8,8 @@ load_dotenv()
 
 # Config from environment variables
 ALLOWED_IPS = os.environ.get('ALLOWED_IPS', '127.0.0.1').split(',')
+
+
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
@@ -22,7 +24,6 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# get client IP address
 def get_client_ip():
     x_forwarded_for = request.headers.get('X-Forwarded-For')
     if x_forwarded_for:
