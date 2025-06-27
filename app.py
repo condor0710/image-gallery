@@ -17,15 +17,23 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Create upload folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Helper: check file extension
+# check file extension
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# IP Whitelisting - keeps your test app secure
+# get client IP address
+def get_client_ip():
+    x_forwarded_for = request.headers.get('X-Forwarded-For')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.remote_addr
+
+# IP Whitelisting
 @app.before_request
 def limit_remote_addr():
-    if request.remote_addr not in ALLOWED_IPS:
+    client_ip = get_client_ip()
+    if client_ip not in ALLOWED_IPS:
         return "Access denied: IP not allowed.", 403
 
 # Gallery route - list all uploaded images
@@ -78,7 +86,7 @@ def delete_file(filename):
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# Serve frontend
+# Serve home page
 @app.route('/')
 def index():
     return send_from_directory('static', 'index.html')
@@ -88,4 +96,4 @@ def static_files(path):
     return send_from_directory('static', path)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

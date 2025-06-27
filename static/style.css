@@ -170,6 +170,9 @@ header p {
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .gallery-item:hover {
@@ -186,6 +189,9 @@ header p {
 
 .gallery-item-info {
     padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
 }
 
 .gallery-item-title {
@@ -213,6 +219,7 @@ header p {
     font-weight: 500;
     transition: all 0.3s ease;
     width: 100%;
+    margin-top: auto;
 }
 
 .delete-btn:hover {
@@ -306,5 +313,90 @@ header p {
 .file-item .file-icon {
     color: #667eea;
     font-weight: bold;
+}
+
+/* Delete confirmation modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+.modal-content h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.modal-content p {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.modal-checkbox {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.modal-checkbox label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.modal-checkbox input {
+    margin-right: 8px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.modal-btn.cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.modal-btn.cancel:hover {
+    background: #5a6268;
+}
+
+.modal-btn.delete {
+    background: linear-gradient(135deg, #ff4757, #ff3742);
+    color: white;
+}
+
+.modal-btn.delete:hover {
+    background: linear-gradient(135deg, #ff3742, #ff2f3a);
+    transform: translateY(-1px);
 }
 

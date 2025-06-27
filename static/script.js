@@ -10,6 +10,9 @@ function showNotification(message, type = 'info') {
     }, 4000);
 }
 
+// Maximum file size (10MB in bytes)
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 // Show file preview
 function showFilePreview(files) {
     const filePreview = document.getElementById('filePreview');
@@ -47,23 +50,49 @@ async function upload() {
         return;
     }
 
+    // Validate file sizes
+    const oversizedFiles = [];
+    const validFiles = [];
+    
+    Array.from(files).forEach(file => {
+        if (file.size > MAX_FILE_SIZE) {
+            oversizedFiles.push(file);
+        } else {
+            validFiles.push(file);
+        }
+    });
+
+    // Show error for oversized files
+    if (oversizedFiles.length > 0) {
+        const oversizedNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
+        showNotification(`File(s) too large (max 10MB): ${oversizedNames}`, 'error');
+        
+        // If no valid files remain, stop here
+        if (validFiles.length === 0) {
+            return;
+        }
+        
+        // Show info about continuing with valid files
+        showNotification(`Uploading ${validFiles.length} valid file(s), skipping ${oversizedFiles.length} oversized file(s)`, 'info');
+    }
+
     // Hide file preview during upload
     document.getElementById('filePreview').classList.remove('show');
 
     // Show loading state
     const uploadBtn = document.querySelector('.upload-btn');
     const originalText = uploadBtn.textContent;
-    uploadBtn.textContent = `Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`;
+    uploadBtn.textContent = `Uploading ${validFiles.length} file${validFiles.length > 1 ? 's' : ''}...`;
     uploadBtn.disabled = true;
 
     let successCount = 0;
     let errorCount = 0;
-    const totalFiles = files.length;
+    const totalFiles = validFiles.length;
 
     try {
-        // Upload files one by one
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        // Upload valid files one by one
+        for (let i = 0; i < validFiles.length; i++) {
+            const file = validFiles[i];
             
             // Update button text to show progress
             uploadBtn.textContent = `Uploading ${i + 1}/${totalFiles}...`;
@@ -92,10 +121,13 @@ async function upload() {
         }
 
         // Show final results
-        if (successCount === totalFiles) {
+        if (successCount === totalFiles && oversizedFiles.length === 0) {
             showNotification(`All ${totalFiles} image${totalFiles > 1 ? 's' : ''} uploaded successfully!`, 'success');
         } else if (successCount > 0) {
-            showNotification(`${successCount} of ${totalFiles} images uploaded successfully. ${errorCount} failed.`, 'info');
+            const message = oversizedFiles.length > 0 
+                ? `${successCount} of ${files.length} total images uploaded successfully. ${errorCount} failed, ${oversizedFiles.length} skipped (too large).`
+                : `${successCount} of ${totalFiles} images uploaded successfully. ${errorCount} failed.`;
+            showNotification(message, 'info');
         } else {
             showNotification(`Failed to upload any images. Please try again.`, 'error');
         }
@@ -116,10 +148,82 @@ async function upload() {
 
 // Delete image function
 async function deleteImage(filename) {
-    if (!confirm('Are you sure you want to delete this image?')) {
-        return;
+    // Check if user has opted to skip confirmation
+    const skipConfirmation = localStorage.getItem('skipDeleteConfirmation') === 'true';
+    
+    if (!skipConfirmation) {
+        const shouldDelete = await showDeleteConfirmation(filename);
+        if (!shouldDelete) {
+            return;
+        }
     }
+    
+    await performDelete(filename);
+}
 
+// Show custom delete confirmation modal
+function showDeleteConfirmation(filename) {
+    return new Promise((resolve) => {
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        
+        // Create modal content
+        const modal = document.createElement('div');
+        modal.className = 'modal-content';
+        
+        modal.innerHTML = `
+            <h3>Delete Image</h3>
+            <p>Are you sure you want to delete "${filename}"?</p>
+            <div class="modal-checkbox">
+                <label>
+                    <input type="checkbox" id="dontAskAgain">
+                    Don't ask me again
+                </label>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelBtn" class="modal-btn cancel">Cancel</button>
+                <button id="deleteBtn" class="modal-btn delete">Delete</button>
+            </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Handle button clicks
+        const cancelBtn = modal.querySelector('#cancelBtn');
+        const deleteBtn = modal.querySelector('#deleteBtn');
+        const dontAskAgain = modal.querySelector('#dontAskAgain');
+        
+        cancelBtn.onclick = () => {
+            document.body.removeChild(overlay);
+            resolve(false);
+        };
+        
+        deleteBtn.onclick = () => {
+            // Save preference if checkbox is checked
+            if (dontAskAgain.checked) {
+                localStorage.setItem('skipDeleteConfirmation', 'true');
+            }
+            document.body.removeChild(overlay);
+            resolve(true);
+        };
+        
+        // Close on overlay click
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+                resolve(false);
+            }
+        };
+        
+        // Focus delete button
+        deleteBtn.focus();
+    });
+}
+
+// Perform the actual delete operation
+async function performDelete(filename) {
     try {
         const response = await fetch('/delete/' + filename, {
             method: 'DELETE'
@@ -128,8 +232,16 @@ async function deleteImage(filename) {
         const result = await response.json();
 
         if (response.ok && result.success) {
+            const deletedElement = document.querySelector(`button[onclick="deleteImage('${filename}')"]`)?.closest('.gallery-item');
+            if (deletedElement) {
+                deletedElement.style.transition = 'opacity 0.3s ease';
+                deletedElement.style.opacity = '0';
+                setTimeout(() => {
+                    deletedElement.remove();
+                }, 300);
+            }
+            
             showNotification('Image deleted successfully!', 'success');
-            await loadGallery(); // Refresh gallery
         } else {
             showNotification(result.error || 'Delete failed. Please try again.', 'error');
         }
@@ -143,7 +255,7 @@ async function deleteImage(filename) {
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ['Bytes', 'KB', 'MB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
@@ -191,6 +303,7 @@ async function loadGallery() {
                 </div>
             `;
         }
+        
     } catch (error) {
         console.error('Gallery loading error:', error);
         gallery.innerHTML = `
