@@ -32,6 +32,7 @@ A Flask web application for uploading, managing, and displaying images with a cl
 - Python 3.7+
 - Flask
 - python-dotenv
+- gunicorn (for running on onrender.com)
 
 ### Setup Instructions
 
